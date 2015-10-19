@@ -134,12 +134,13 @@ SCALA_VERSION=$("$MVN" help:evaluate -Dexpression=scala.binary.version $@ 2>/dev
 SPARK_HADOOP_VERSION=$("$MVN" help:evaluate -Dexpression=hadoop.version $@ 2>/dev/null\
     | grep -v "INFO"\
     | tail -n 1)
-SPARK_HIVE=$("$MVN" help:evaluate -Dexpression=project.activeProfiles -pl sql/hive $@ 2>/dev/null\
-    | grep -v "INFO"\
-    | fgrep --count "<id>hive</id>";\
-    # Reset exit status to 0, otherwise the script stops here if the last grep finds nothing\
-    # because we use "set -o pipefail"
-    echo -n)
+SPARK_HIVE=1
+#SPARK_HIVE=$("$MVN" help:evaluate -Dexpression=project.activeProfiles -pl sql/hive $@ 2>/dev/null\
+#    | grep -v "INFO"\
+#    | fgrep --count "<id>hive</id>";\
+#    # Reset exit status to 0, otherwise the script stops here if the last grep finds nothing\
+#    # because we use "set -o pipefail"
+#    echo -n)
 
 if [ "$NAME" == "none" ]; then
   NAME=$SPARK_HADOOP_VERSION
