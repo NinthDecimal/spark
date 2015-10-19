@@ -71,6 +71,31 @@ fi
 
 export _SPARK_ASSEMBLY="$SPARK_ASSEMBLY_JAR"
 
+###################
+# BEGIN: NinthDecimal
+export SPARK_ND_SCM_VER="$Revision: 61012 $"
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/mapr/hadoop/hadoop-2.5.1/lib/native
+
+if [ "$PIP_VENV_WHEELHOUSE" != "" ]; then
+    echo "PIP_VENV_WHEELHOUSE=$PIP_VENV_WHEELHOUSE specified"
+
+    VENV_WHEELHOUSE=/tmp/venv-`date +%Y%m%dT%H%M%S`-$(echo $$)
+    echo "downloading PIP_VENV_WHEELHOUSE to ${VENV_WHEELHOUSE}"
+    virtualenv --system-site-packages ${VENV_WHEELHOUSE}
+    cd ${VENV_WHEELHOUSE}
+    . bin/activate
+    wget -qO- $PIP_VENV_WHEELHOUSE | tar xz
+    echo "Installing wheelhouse packages"
+
+    # be sure to use our venv pip otherwise we might install with the wrong pip
+    bin/python bin/pip install --no-index --find-links=wheelhouse `ls -1 wheelhouse | cut -d- -f1`
+    cd ${FWDIR}
+fi
+
+# END: NinthDecimal
+###################
+
 # The launcher library will print arguments separated by a NULL character, to allow arguments with
 # characters that would be otherwise interpreted by the shell. Read that in a while loop, populating
 # an array that will be used to exec the final command.
