@@ -22,7 +22,7 @@ import java.nio.ByteBuffer
 import scala.collection.JavaConverters._
 
 import org.apache.mesos.protobuf.ByteString
-import org.apache.mesos.{Executor => MesosExecutor, ExecutorDriver, MesosExecutorDriver}
+import org.apache.mesos.{Executor => MesosExecutor, ExecutorDriver, MesosExecutorDriver, MesosNativeLibrary}
 import org.apache.mesos.Protos.{TaskStatus => MesosTaskStatus, _}
 
 import org.apache.spark.{Logging, TaskState, SparkConf, SparkEnv}
@@ -87,10 +87,10 @@ private[spark] class MesosExecutorBackend
     if (executor == null) {
       logError("Received launchTask but executor was null")
     } else {
-      SparkHadoopUtil.get.runAsSparkUser { () =>
-        executor.launchTask(this, taskId = taskId, attemptNumber = taskData.attemptNumber,
-          taskInfo.getName, taskData.serializedTask)
-      }
+      //2015-01-31 FI Reverted this commit, it gives us NPE Failure loading MapRClient errors
+      //https://github.com/apache/spark/commit/c0e7ce056c79e1db96f85b8c56a479b8b043970#diff-8bde00c4ca34512425028914dd7cf147
+      executor.launchTask(this, taskId = taskId, attemptNumber = taskData.attemptNumber,
+        taskInfo.getName, taskData.serializedTask)
     }
   }
 
@@ -122,8 +122,15 @@ private[spark] class MesosExecutorBackend
 private[spark] object MesosExecutorBackend extends Logging {
   def main(args: Array[String]) {
     SignalLogger.register(log)
-    // Create a new Executor and start it running
-    val runner = new MesosExecutorBackend()
-    new MesosExecutorDriver(runner).run()
+
+    //2015-01-31 FI Reverted this commit, it gives us NPE Failure loading MapRClient errors
+    //https://github.com/apache/spark/commit/1c0e7ce056c79e1db96f85b8c56a479b8b043970#diff-8bde00c4ca34512425028914dd7cf147
+
+    SparkHadoopUtil.get.runAsSparkUser { () =>
+        MesosNativeLibrary.load()
+        // Create a new Executor and start it running
+        val runner = new MesosExecutorBackend()
+        new MesosExecutorDriver(runner).run()
+    }
   }
 }
