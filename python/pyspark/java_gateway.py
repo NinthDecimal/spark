@@ -109,6 +109,8 @@ def launch_gateway():
                 Popen(["cmd", "/c", "taskkill", "/f", "/t", "/pid", str(proc.pid)])
             atexit.register(killChild)
 
+    os.environ['PYSPARK_GATEWAY_PORT'] = str(gateway_port)
+
     # Connect to the gateway
     gateway = JavaGateway(GatewayClient(port=gateway_port), auto_convert=True)
 
