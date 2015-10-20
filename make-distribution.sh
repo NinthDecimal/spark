@@ -258,6 +258,14 @@ if [ "$SPARK_TACHYON" == "true" ]; then
   rm -rf "$TMPD"
 fi
 
+# copy bonecp required libraries
+# see https://github.com/datanucleus/datanucleus-rdbms/blob/master/src/main/java/org/datanucleus/store/rdbms/ConnectionFactoryImpl.java
+pushd $TARDIR/lib
+rm -f bonecp-0.8.0.RELEASE.jar guava-15.0.jar
+wget "http://central.maven.org/maven2/com/jolbox/bonecp/0.8.0.RELEASE/bonecp-0.8.0.RELEASE.jar"
+wget "http://central.maven.org/maven2/com/google/guava/guava/15.0/guava-15.0.jar"
+popd
+
 if [ "$MAKE_TGZ" == "true" ]; then
   TARDIR_NAME=spark-$VERSION-bin-$NAME
   TARDIR="$SPARK_HOME/$TARDIR_NAME"
