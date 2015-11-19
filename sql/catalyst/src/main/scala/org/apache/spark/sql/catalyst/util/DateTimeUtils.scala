@@ -400,28 +400,37 @@ object DateTimeUtils {
   }
 
   /**
+   * Returns the microseconds since year zero (-17999) from microseconds since epoch.
+   */
+  private def absoluteMicroSecond(microsec: SQLTimestamp): SQLTimestamp = {
+    microsec + toYearZero * MICROS_PER_DAY
+  }
+
+  private def localTimestamp(microsec: SQLTimestamp): SQLTimestamp = {
+    absoluteMicroSecond(microsec) + defaultTimeZone.getOffset(microsec / 1000) * 1000L
+  }
+
+  /**
    * Returns the hour value of a given timestamp value. The timestamp is expressed in microseconds.
    */
-  def getHours(timestamp: SQLTimestamp): Int = {
-    val localTs = (timestamp / 1000) + defaultTimeZone.getOffset(timestamp / 1000)
-    ((localTs / 1000 / 3600) % 24).toInt
+  def getHours(microsec: SQLTimestamp): Int = {
+    ((localTimestamp(microsec) / MICROS_PER_SECOND / 3600) % 24).toInt
   }
 
   /**
    * Returns the minute value of a given timestamp value. The timestamp is expressed in
    * microseconds.
    */
-  def getMinutes(timestamp: SQLTimestamp): Int = {
-    val localTs = (timestamp / 1000) + defaultTimeZone.getOffset(timestamp / 1000)
-    ((localTs / 1000 / 60) % 60).toInt
+  def getMinutes(microsec: SQLTimestamp): Int = {
+    ((localTimestamp(microsec) / MICROS_PER_SECOND / 60) % 60).toInt
   }
 
   /**
    * Returns the second value of a given timestamp value. The timestamp is expressed in
    * microseconds.
    */
-  def getSeconds(timestamp: SQLTimestamp): Int = {
-    ((timestamp / 1000 / 1000) % 60).toInt
+  def getSeconds(microsec: SQLTimestamp): Int = {
+    ((localTimestamp(microsec) / MICROS_PER_SECOND) % 60).toInt
   }
 
   private[this] def isLeapYear(year: Int): Boolean = {
