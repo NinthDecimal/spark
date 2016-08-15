@@ -72,8 +72,29 @@ build_command() {
   printf "%d\0" $?
 }
 
+###################
+# BEGIN: NinthDecimal
+if [ "$PIP_VENV_WHEELHOUSE" != "" ]; then
+    echo "PIP_VENV_WHEELHOUSE=$PIP_VENV_WHEELHOUSE specified"
+
+    VENV_WHEELHOUSE=/tmp/venv-`date +%Y%m%dT%H%M%S`-$(echo $$)
+    echo "downloading PIP_VENV_WHEELHOUSE to ${VENV_WHEELHOUSE}"
+    virtualenv --system-site-packages ${VENV_WHEELHOUSE}
+    pushd ${VENV_WHEELHOUSE}
+    . bin/activate
+    wget -qO- $PIP_VENV_WHEELHOUSE | tar xz
+    echo "Installing wheelhouse packages"
+
+    # be sure to use our venv pip otherwise we might install with the wrong pip
+    bin/python bin/pip install --no-index --find-links=wheelhouse `ls -1 wheelhouse | cut -d- -f1`
+    popd
+fi
+# END: NinthDecimal
+###################
+
 # Turn off posix mode since it does not allow process substitution
 set +o posix
+
 CMD=()
 while IFS= read -d '' -r ARG; do
   CMD+=("$ARG")
