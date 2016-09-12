@@ -55,7 +55,7 @@ class JsonFileFormat extends TextBasedFileFormat with DataSourceRegister {
           .getOrElse(sparkSession.sessionState.conf.columnNameOfCorruptRecord)
       val jsonFiles = files.filterNot { status =>
         val name = status.getPath.getName
-        name.startsWith("_") || name.startsWith(".")
+        (name.startsWith("_") && !name.contains("=")) || name.startsWith(".")
       }.toArray
 
       val jsonSchema = InferSchema.infer(
@@ -85,7 +85,7 @@ class JsonFileFormat extends TextBasedFileFormat with DataSourceRegister {
           bucketId: Option[Int],
           dataSchema: StructType,
           context: TaskAttemptContext): OutputWriter = {
-        new JsonOutputWriter(path, bucketId, dataSchema, context)
+        new JsonOutputWriter(path, parsedOptions, bucketId, dataSchema, context)
       }
     }
   }
@@ -155,6 +155,7 @@ class JsonFileFormat extends TextBasedFileFormat with DataSourceRegister {
 
 private[json] class JsonOutputWriter(
     path: String,
+    options: JSONOptions,
     bucketId: Option[Int],
     dataSchema: StructType,
     context: TaskAttemptContext)
@@ -181,7 +182,7 @@ private[json] class JsonOutputWriter(
   override def write(row: Row): Unit = throw new UnsupportedOperationException("call writeInternal")
 
   override protected[sql] def writeInternal(row: InternalRow): Unit = {
-    JacksonGenerator(dataSchema, gen)(row)
+    JacksonGenerator(dataSchema, gen, options)(row)
     gen.flush()
 
     result.set(writer.toString)

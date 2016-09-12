@@ -139,7 +139,7 @@ class HiveCommandSuite extends QueryTest with SQLTestUtils with TestHiveSingleto
   }
 
   test("show tblproperties for spark temporary table - empty row") {
-    withTempTable("parquet_temp") {
+    withTempView("parquet_temp") {
       sql(
         """
           |CREATE TEMPORARY TABLE parquet_temp (c1 INT, c2 STRING)
@@ -397,7 +397,7 @@ class HiveCommandSuite extends QueryTest with SQLTestUtils with TestHiveSingleto
   }
 
   test("show partitions - empty row") {
-    withTempTable("parquet_temp") {
+    withTempView("parquet_temp") {
       sql(
         """
           |CREATE TEMPORARY TABLE parquet_temp (c1 INT, c2 STRING)
@@ -422,7 +422,7 @@ class HiveCommandSuite extends QueryTest with SQLTestUtils with TestHiveSingleto
       val message4 = intercept[AnalysisException] {
         sql("SHOW PARTITIONS parquet_view1")
       }.getMessage
-      assert(message4.contains("is not allowed on a view or index table"))
+      assert(message4.contains("is not allowed on a view"))
     }
   }
 
