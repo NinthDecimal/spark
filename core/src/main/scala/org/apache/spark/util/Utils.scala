@@ -1768,6 +1768,21 @@ private[spark] object Utils extends Logging {
   }
 
   /**
+   * Generate a zipWithIndex iterator, avoid index value overflowing problem
+   * in scala's zipWithIndex
+   */
+  def getIteratorZipWithIndex[T](iterator: Iterator[T], startIndex: Long): Iterator[(T, Long)] = {
+    new Iterator[(T, Long)] {
+      var index: Long = startIndex - 1L
+      def hasNext: Boolean = iterator.hasNext
+      def next(): (T, Long) = {
+        index += 1L
+        (iterator.next(), index)
+      }
+    }
+  }
+
+  /**
    * Creates a symlink.
    *
    * @param src absolute path to the source
@@ -1962,7 +1977,11 @@ private[spark] object Utils extends Logging {
   /** Returns true if the given exception was fatal. See docs for scala.util.control.NonFatal. */
   def isFatalError(e: Throwable): Boolean = {
     e match {
-      case NonFatal(_) | _: InterruptedException | _: NotImplementedError | _: ControlThrowable =>
+      case NonFatal(_) |
+           _: InterruptedException |
+           _: NotImplementedError |
+           _: ControlThrowable |
+           _: LinkageError =>
         false
       case _ =>
         true
