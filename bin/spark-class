@@ -93,6 +93,8 @@ fi
 ###################
 
 
+# Turn off posix mode since it does not allow process substitution
+set +o posix
 CMD=()
 while IFS= read -d '' -r ARG; do
   CMD+=("$ARG")

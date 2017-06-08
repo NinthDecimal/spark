@@ -324,6 +324,12 @@ class SQLTests(ReusedPySparkTestCase):
         [row] = self.spark.sql("SELECT double(double(1) + 1)").collect()
         self.assertEqual(row[0], 6)
 
+    def test_single_udf_with_repeated_argument(self):
+        # regression test for SPARK-20685
+        self.spark.catalog.registerFunction("add", lambda x, y: x + y, IntegerType())
+        row = self.spark.sql("SELECT add(1, 1)").first()
+        self.assertEqual(tuple(row), (2, ))
+
     def test_multiple_udfs(self):
         self.spark.catalog.registerFunction("double", lambda x: x * 2, IntegerType())
         [row] = self.spark.sql("SELECT double(1), double(2)").collect()
@@ -1359,6 +1365,14 @@ class SQLTests(ReusedPySparkTestCase):
         self.assertEqual(day1, day)
         self.assertEqual(now, now1)
         self.assertEqual(now, utcnow1)
+
+    # regression test for SPARK-19561
+    def test_datetime_at_epoch(self):
+        epoch = datetime.datetime.fromtimestamp(0)
+        df = self.spark.createDataFrame([Row(date=epoch)])
+        first = df.select('date', lit(epoch).alias('lit_date')).first()
+        self.assertEqual(first['date'], epoch)
+        self.assertEqual(first['lit_date'], epoch)
 
     def test_decimal(self):
         from decimal import Decimal

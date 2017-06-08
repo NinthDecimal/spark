@@ -72,7 +72,7 @@ class SubquerySuite extends QueryTest with SharedSQLContext {
     }
   }
 
-  test("rdd deserialization does not crash [SPARK-15791]") {
+  test("SPARK-15791: rdd deserialization does not crash") {
     sql("select (select 1 as b) as b").rdd.count()
   }
 
@@ -823,6 +823,28 @@ class SubquerySuite extends QueryTest with SharedSQLContext {
           |               from t2 lateral view explode(arr_c2) q as c2
                           where t1.c1 = t2.c1)""".stripMargin),
         Row(1) :: Row(0) :: Nil)
+    }
+  }
+
+  test("SPARK-19933 Do not eliminate top-level aliases in sub-queries") {
+    withTempView("t1", "t2") {
+      spark.range(4).createOrReplaceTempView("t1")
+      checkAnswer(
+        sql("select * from t1 where id in (select id as id from t1)"),
+        Row(0) :: Row(1) :: Row(2) :: Row(3) :: Nil)
+
+      spark.range(2).createOrReplaceTempView("t2")
+      checkAnswer(
+        sql("select * from t1 where id in (select id as id from t2)"),
+        Row(0) :: Row(1) :: Nil)
+    }
+  }
+
+  test("SPARK-20688: correctly check analysis for scalar sub-queries") {
+    withTempView("t") {
+      Seq(1 -> "a").toDF("i", "j").createTempView("t")
+      val e = intercept[AnalysisException](sql("SELECT (SELECT count(*) FROM t WHERE a = 1)"))
+      assert(e.message.contains("cannot resolve '`a`' given input columns: [i, j]"))
     }
   }
 }

@@ -79,7 +79,17 @@ case class SortMergeJoinExec(
   override def requiredChildDistribution: Seq[Distribution] =
     ClusteredDistribution(leftKeys) :: ClusteredDistribution(rightKeys) :: Nil
 
-  override def outputOrdering: Seq[SortOrder] = requiredOrders(leftKeys)
+  override def outputOrdering: Seq[SortOrder] = joinType match {
+    // For left and right outer joins, the output is ordered by the streamed input's join keys.
+    case LeftOuter => requiredOrders(leftKeys)
+    case RightOuter => requiredOrders(rightKeys)
+    // There are null rows in both streams, so there is no order.
+    case FullOuter => Nil
+    case _: InnerLike | LeftExistence(_) => requiredOrders(leftKeys)
+    case x =>
+      throw new IllegalArgumentException(
+        s"${getClass.getSimpleName} should not take $x as the JoinType")
+  }
 
   override def requiredChildOrdering: Seq[Seq[SortOrder]] =
     requiredOrders(leftKeys) :: requiredOrders(rightKeys) :: Nil
@@ -332,6 +342,7 @@ case class SortMergeJoinExec(
       keys: Seq[Expression],
       input: Seq[Attribute]): Seq[ExprCode] = {
     ctx.INPUT_ROW = row
+    ctx.currentVars = null
     keys.map(BindReferences.bindReference(_, input).genCode(ctx))
   }
 
