@@ -277,6 +277,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.izettle</groupId>
+      <artifactId>dropwizard-metrics-influxdb</artifactId>
+      <version>1.2.2</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
