@@ -227,7 +227,17 @@
 
     <CodeCacheSize>512m</CodeCacheSize>
   </properties>
-  <repositories>
+    <repositories>
+      <repository>
+        <id>mapr-releases</id>
+        <url>http://repository.mapr.com/maven/</url>
+	<snapshots>
+	  <enabled>false</enabled>
+        </snapshots>
+	<releases>
+	  <enabled>true</enabled>
+        </releases>
+    </repository>
     <repository>
       <id>central</id>
       <!-- This should be at top, it makes maven try the central repo first and then others and hence faster dep resolution -->
